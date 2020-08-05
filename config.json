@@ -1,5 +1,11 @@
 {
-    "token": "YOURTOKENHERE",
-    "DiscordCustomStatus": true,
-    "PrinterServer": true
+	"token": "YOURTOKENHERE",
+	"DiscordCustomStatus": {
+		"status": false,
+		"pid": null
+	},
+	"PrinterServer": {
+		"status": false,
+		"pid": null
+	}
 }
