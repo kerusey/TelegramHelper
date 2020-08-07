@@ -1,6 +1,8 @@
 import os
 import subprocess
-import json
+import threading
+from json import load, dump
+from time import sleep
 
 # process names that gonna be tracked
 constPythonTasksNames = {
@@ -15,22 +17,54 @@ constNodeTasksNames = {
 	}
 }
 # process names that gonna be tracked
-
-config = json.load(open('config.json'))
+baseDir = os.path.dirname(os.path.abspath(__file__)) + "/"
+config = load(open(baseDir + 'config.json'))
 
 tasks = []
 for item in config:
 	if (item != 'token'):
 		tasks.append(item)
 
-def startProcess(task:dict):
-	if (task['name'] in constPythonTasksNames):
-		subprocess.run(['python3', constPythonTasksNames[task['name']]['path']])
-	if (task['name'] in constNodeTasksNames):
-		subprocess.run(['/usr/bin/node', constNodeTasksNames[task['name']]['path']])
+def stopProcess(task):
+	if (type(task) == dict):
+		subprocess.run(['kill', str(task['pid'])])
+	elif (type(task) == int):
+		subprocess.run(['kill', str(task)])
+	elif (type(task) == str):
+		subprocess.run(['kill', task])
 
-def stopProcess(task:dict):
-	subprocess.run(['kill', str(task['pid'])])
+nodeHandler = [] # assiged to startNodeProcess def global list
+def startNodeProcess(path):
+	global nodeHandler
+	nodeHandler.append(subprocess.Popen(['/usr/bin/node', path]).pid)
+
+pyHandler = [] # assiged to startPyProcess def global list
+def startPyProcess(path):
+	global pyHandler
+	pyHandler.append(subprocess.Popen(['/usr/bin/node', path]).pid)
+
+def startProcess(task:dict):
+	while (True):
+		if (task['name'] in constPythonTasksNames):
+			thread = threading.Thread(target = startPyProcess, 
+									  args = (constPythonTasksNames[task['name']]['path'], ),
+									  daemon = True)
+
+		elif (task['name'] in constNodeTasksNames):
+			thread = threading.Thread(target = startNodeProcess, 
+									  args = (constNodeTasksNames[task['name']]['path'], ),
+									  daemon = True)
+		thread.run()
+		
+		sleep(1800)
+
+		if (len(pyHandler)):
+			stopProcess(pyHandler[0])
+			pyHandler.clear()
+
+		elif (len(nodeHandler)):
+			stopProcess(nodeHandler[0])
+			nodeHandler.clear()
 
 def findNodeCommand(pids:list):
 	response = []
@@ -84,8 +118,8 @@ def editConfig(taskName:str, tasks:list):
 			config[taskName]['status'] = True
 			config[taskName]['pid'] = task['pid']
 	print(config)
-	with open("config.json", 'w') as configFile:
-		json.dump(config, configFile, indent=4)
+	with open(baseDir + "config.json", 'w') as configFile:
+		dump(config, configFile, indent=4)
 
 def checkTask(taskName:str): # updates config.json
 	if (taskName in constPythonTasksNames): # checks python pids
