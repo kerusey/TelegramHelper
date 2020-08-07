@@ -1,10 +1,11 @@
 import ProcessHandler as Handler
 import threading
-import json
+from json import load
 import telegram
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
+import time
 
-config = json.load(open('config.json'))
+config = load(open(Handler.baseDir + 'config.json'))
 session = Updater(token = config['token'], use_context = True)
 
 tasks = []
@@ -14,7 +15,7 @@ for item in config:
 
 def reloadConfig():
 	global config
-	config = json.load(open('config.json'))
+	config = load(open(Handler.baseDir + 'config.json'))
 
 def start(update, context):
 	update.message.reply_text(text = "What task would you like to check?", reply_markup = telegram.ReplyKeyboardMarkup([[task] for task in tasks]))
@@ -26,6 +27,7 @@ task = { # global variable assigned to conversation func, related to the specifi
 }
 
 def conversation(update, context):
+	time.sleep(1)
 	userReply = update.message.text
 	global task
 	if (userReply in config): # picking task
