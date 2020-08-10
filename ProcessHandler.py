@@ -41,7 +41,7 @@ def startNodeProcess(path):
 pyHandler = [] # assiged to startPyProcess def global list
 def startPyProcess(path):
 	global pyHandler
-	pyHandler.append(subprocess.Popen(['/usr/bin/node', path]).pid)
+	pyHandler.append(subprocess.Popen(['python3', path]).pid)
 
 def startProcess(task:dict):
 	while (True):
